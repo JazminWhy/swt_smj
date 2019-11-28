@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Results</title>
+</head>
+<body>
+{% for graph in graphs %}
+    <img src="data:image/png;base64,{{graph}}" width="300" height="300">
+{% endfor %}
+{% for table in tables %}
+            <h1>{{titles[loop.index - 1]}}</h1>
+            {{ table }}
+{% endfor %}
+</body>
+</html>
