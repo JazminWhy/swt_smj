@@ -11,7 +11,7 @@ DBPEDIA_ENDPOINT = 'http://dbpedia.org/sparql/'
 OPENEI_ENPOINT = 'https://openei.org/sparql/l'
 QBOAIRBASE_ENPOINT = 'http://lod.cs.aau.dk:8891/sparql'
 
-DBPEDIA_GET_CITY_COUNTRY ="""
+DBPEDIA_GET_CITY_COUNTRY = """
 PREFIX dbo: <http://dbpedia.org/ontology/>
 PREFIX dbr: <http://dbpedia.org/resource/>
 SELECT ?city ?country WHERE {
@@ -20,7 +20,7 @@ SELECT ?city ?country WHERE {
     dbo:country ?country
 }"""
 
-DBPEDIA_GET_CITY_COUNTRY_STRIPPED =""" PREFIX dbo: <http://dbpedia.org/ontology/>
+DBPEDIA_GET_CITY_COUNTRY_STRIPPED = """ PREFIX dbo: <http://dbpedia.org/ontology/>
 PREFIX dbr: <http://dbpedia.org/resource/>
 SELECT DISTINCT ?city ?country ?strippedLabel WHERE {
  ?city a dbo:PopulatedPlace  ;
@@ -31,7 +31,7 @@ FILTER langMatches( lang(?countryLabel), "EN" )
 BIND (STR(?countryLabel)  AS ?strippedLabel) 
 }"""
 
-OPEN_EI_QUERY_ALL_REGIONS =""" PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+OPEN_EI_QUERY_ALL_REGIONS = """ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX swivt: <http://semantic-mediawiki.org/swivt/1.0#>
 PREFIX resource: <http://openei.org/resources/>
@@ -50,7 +50,7 @@ WHERE {
   }.
 }"""
 
-OPEN_EI_QUERY_SPECIFIC_REGION_BY_COUNTRY_FILTER =""" 
+OPEN_EI_QUERY_SPECIFIC_REGION_BY_COUNTRY_FILTER = """ 
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX swivt: <http://semantic-mediawiki.org/swivt/1.0#>
@@ -125,24 +125,25 @@ WHERE {
  """
 
 OPEN_EI_QUERY_RETRIEVE_ALL_INSTITUTES_FROM_COUNTRY_BY_PLACE_NAME = """ 
+
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX swivt: <http://semantic-mediawiki.org/swivt/1.0#>
 PREFIX resource: <http://openei.org/resources/>
 PREFIX category: <http://openei.org/resources/Category-3A>
 PREFIX property: <http://openei.org/resources/Property-3A>
-SELECT DISTINCT ?page ?name ?address ?place  ?place_name
+SELECT ?page ?name ?address ?place_name ?zip ?coordinates ?sector_name ?category_name
 FROM <http://openei.org>
 WHERE {
   ?organization swivt:page ?page.
   ?organization rdf:type category:Research_Institutions.
   ?organization rdfs:label ?name.
-  OPTIONAL { ?organization property:Address ?ad. }.
+  OPTIONAL { ?organization property:Address ?address. }.
   OPTIONAL { ?organization property:Zip ?zip. }.
   OPTIONAL { ?organization property:Coordinates ?coordinates. }.
   OPTIONAL {
     ?organization property:Place ?place.
-    ?place rdfs:label ?pn.
+    ?place rdfs:label ?place_name.
   }.
   OPTIONAL {
     ?organization property:Sector ?sector. 
@@ -152,11 +153,7 @@ WHERE {
     ?organization rdf:type ?category.
     ?category rdfs:label ?category_name.
   }.
-       BIND(IF(bound(?pn), ?pn, "no named place")
-    AS ?place_name).
-BIND(IF(bound(?ad), ?ad, "no adress")
-    AS ?address).
-FILTER(regex(?place, "%(country)s"))
+FILTER (regex(?place_name, "Germany"))
 }
 
 """
@@ -168,22 +165,18 @@ PREFIX swivt: <http://semantic-mediawiki.org/swivt/1.0#>
 PREFIX resource: <http://openei.org/resources/>
 PREFIX category: <http://openei.org/resources/Category-3A>
 PREFIX property: <http://openei.org/resources/Property-3A>
-SELECT Distinct ?page ?name ?address ?place ?place_name 
+SELECT distinct ?page ?name ?address ?place_name 
 FROM <http://openei.org>
 WHERE {
   ?organization swivt:page ?page.
   ?organization rdf:type category:Financial_Organizations.
   ?organization rdfs:label ?name.
-  OPTIONAL { ?organization property:Address ?ad. }.
+  OPTIONAL { ?organization property:Address ?address. }.
   OPTIONAL {
     ?organization property:Place ?place.
-    ?place rdfs:label ?pn.
+    ?place rdfs:label ?place_name.
   }.
-        BIND(IF(bound(?ad), ?ad, "no adress")
-    AS ?address).
-     BIND(IF(bound(?pn), ?pn, "no named place")
-    AS ?place_name).
-FILTER(regex(?place, "%(country)s"))
+FILTER(regex(?place_name, "%(country)s"))
 }
 
 """
@@ -199,28 +192,10 @@ PREFIX category: <http://openei.org/resources/Category-3A>
 PREFIX property: <http://openei.org/resources/Property-3A>
 PREFIX place: <http://openei.org/resources/Place-3A>
 
-SELECT DISTINCT ?organization ?name ?place ?place_name ?address ?zip ?sector{
+SELECT DISTINCT ?organization ?name ?place {
 ?organization rdf:type category:Organizations.
 ?organization rdfs:label ?name.
 ?organization property:Place ?place.
- OPTIONAL { ?organization property:Zip ?z. }.
-  OPTIONAL { ?organization property:Address ?ad. }.
-  OPTIONAL {
-    ?organization property:Place ?place.
-    ?place rdfs:label ?pn.
-  }.
-  OPTIONAL {
-    ?organization property:Sector ?s. 
-    ?s rdfs:label ?sec_name.
-  }.
-      BIND(IF(bound(?ad), ?ad, "no adress")
-    AS ?address).
-      BIND(IF(bound(?z), ?z, "no ZIP")
-    AS ?zip).
-     BIND(IF(bound(?sec_name), ?sec_name, "no sector")
-    AS ?sector).
-     BIND(IF(bound(?pn), ?pn, "no named place")
-    AS ?place_name).
 FILTER(regex(?place, "%(country)s"))
 }
 
@@ -233,32 +208,24 @@ PREFIX swivt: <http://semantic-mediawiki.org/swivt/1.0#>
 PREFIX resource: <http://openei.org/resources/>
 PREFIX category: <http://openei.org/resources/Category-3A>
 PREFIX property: <http://openei.org/resources/Property-3A>
-SELECT DISTINCT(?page) ?name ?place ?place_name ?address ?zip ?sector
+SELECT DISTINCT ?page ?name ?address ?place_name 
 FROM <http://openei.org>
 WHERE {
   ?organization swivt:page ?page.
   ?organization rdf:type category:Policy_Organizations.
   ?organization rdfs:label ?name.
- OPTIONAL { ?organization property:Zip ?z. }.
-  OPTIONAL { ?organization property:Address ?ad. }.
+  OPTIONAL { ?organization property:Address ?address. }.
   OPTIONAL {
     ?organization property:Place ?place.
     ?place rdfs:label ?place_name.
   }.
   OPTIONAL {
-    ?organization property:Sector ?s. 
-    ?s rdfs:label ?sec_name.
+    ?organization property:Sector ?sector. 
+    ?sector rdfs:label ?sector_name.
   }.
-      BIND(IF(bound(?ad), ?ad, "no adress")
-    AS ?address).
-      BIND(IF(bound(?z), ?z, "no ZIP")
-    AS ?zip).
-     BIND(IF(bound(?sec_name), ?sec_name, "no sector")
-    AS ?sector).
 FILTER(regex(?place_name, "%(country)s"))
 }
 """
-
 
 OPEN_EI_QUERIES_FIND_TOOLS = """ 
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -267,77 +234,69 @@ PREFIX swivt: <http://semantic-mediawiki.org/swivt/1.0#>
 PREFIX resource: <http://openei.org/resources/>
 PREFIX category: <http://openei.org/resources/Category-3A>
 PREFIX property: <http://openei.org/resources/Property-3A>
-SELECT DISTINCT(?organization) ?name ?place_name ?address ?zip ?sector
+SELECT DISTINCT(?organization) ?name ?address ?place_name 
 FROM <http://openei.org>
 WHERE {
   ?organization rdf:type category:Tools.
   ?organization rdfs:label ?name.
-  OPTIONAL { ?organization property:Address ?ad. }.
-  OPTIONAL { ?organization property:Zip ?z. }.
+  OPTIONAL { ?organization property:Address ?address. }.
+  OPTIONAL { ?organization property:Zip ?zip. }.
   OPTIONAL { ?organization property:Coordinates ?coordinates. }.
   OPTIONAL {
     ?organization property:Place ?place.
-    ?place rdfs:label ?pn.
+    ?place rdfs:label ?place_name.
   }.
   OPTIONAL {
-    ?organization property:Sector ?s_. 
-    ?s_ rdfs:label ?sec_name.
+    ?organization property:Sector ?sector. 
+    ?sector rdfs:label ?sector_name.
   }.
   OPTIONAL {
     ?organization rdf:type ?category.
     ?category rdfs:label ?category_name.
   }.
-    BIND(IF(bound(?ad), ?ad, "no adress")
-    AS ?address).
-      BIND(IF(bound(?z), ?z, "no ZIP")
-    AS ?zip).
-     BIND(IF(bound(?sec_name), ?sec_name, "no sector")
-    AS ?sector).
-           BIND(IF(bound(?pn), ?pn, "no named place")
-    AS ?place_name).
-FILTER(regex(?place, "%(country)s"))
+FILTER(regex(?place_name, "%(country)s"))
 }
 
 """
 
-OPEN_EI_CLEAN_ENERGY_COMPANIES =""" 
+OPEN_EI_CLEAN_ENERGY_COMPANIES = """ 
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX swivt: <http://semantic-mediawiki.org/swivt/1.0#>
 PREFIX resource: <http://openei.org/resources/>
 PREFIX category: <http://openei.org/resources/Category-3A>
 PREFIX property: <http://openei.org/resources/Property-3A>
-SELECT DISTINCT ?organization ?name ?address ?place_name ?zip 
+SELECT DISTINCT(?organization) ?name ?address ?place_name 
 FROM <http://openei.org>
 WHERE {
   ?organization rdf:type category:Companies.
   ?organization rdfs:label ?name.
-  OPTIONAL { ?organization property:Address ?ad. }.
-  OPTIONAL { ?organization property:Zip ?z. }.
+  OPTIONAL { ?organization property:Address ?address. }.
+  OPTIONAL { ?organization property:Zip ?zip. }.
   OPTIONAL { ?organization property:Coordinates ?coordinates. }.
   OPTIONAL {
     ?organization property:Place ?place.
-    ?place rdfs:label ?pn.
+    ?place rdfs:label ?place_name.
   }.
-  BIND(IF(bound(?ad), ?ad, "no adress")
-    AS ?address).
-      BIND(IF(bound(?z), ?z, "no ZIP")
-    AS ?zip).
-       BIND(IF(bound(?pn), ?pn, "no named place")
-    AS ?place_name).
-FILTER(regex(?place, "%(country)s"))
+  OPTIONAL {
+    ?organization property:Sector ?sector. 
+    ?sector rdfs:label ?sector_name.
+  }.
+  OPTIONAL {
+    ?organization rdf:type ?category.
+    ?category rdfs:label ?category_name.
+  }.
+FILTER(regex(?place_name, "%(country)s"))
 }
 
 """
 
-OPEN_EI_CLEAN_ENERGY_COMPANIES_PARAMS = ['organization', 'name','place_name', 'address', 'zip' ]
-OPEN_EI_ORGANIZATIONS_PARAMS = ['organization', 'name','place', 'place_name', 'address', 'zip', 'sector' ]
-#OPEN_EI_QUERY_POLICY_ORGANIZATIONS_PER_COUNTRY_PARAMS = ['page', 'name', 'address', 'place_name']
-#OPEN_EI_QUERY_POLICY_ORGANIZATIONS_PER_COUNTRY_DICT = {'page':a, 'name':b, 'address':c, 'place_name':d, 'zip':e, 'coordinates':f, 'sector_name':g, 'category_name':h}
-#OPEN_EI_ORGANIZATION_PARAMS = ['page', 'name', 'place_name', 'address']
-OPEN_EI_FINANCIAL_PARAMS = ['page' ,'name', 'address', 'place','place_name' ]
-OPEN_EI_TOOLS_PARAMS = ['organization', 'name', 'place_name', 'address', 'zip', 'sector' ]
-OPEN_EI_POLICY_PARAMS = ['page', 'name', 'place_name', 'address', 'zip', 'sector' ]
+OPEN_EI_CLEAN_ENERGY_COMPANIES_PARAMS = ['organization', 'name', 'place_name']
+OPEN_EI_ORGANIZATIONS_PARAMS = ['organization', 'name', 'place']
+OPEN_EI_QUERY_POLICY_ORGANIZATIONS_PER_COUNTRY_PARAMS = ['page', 'name', 'address', 'place_name']
+OPEN_EI_ORGANIZATION_PARAMS = ['page', 'name', 'place_name', 'address']
+OPEN_EI_FINANCIAL_PARAMS = ['page', 'name', 'address', 'place_name']
+
 
 # g_facility = rdflib.Graph()
 # g_facility.parse("static/Facility.rdf")
@@ -451,167 +410,77 @@ def get_environmental_facilities(name):
 
 
 def run_tools_by_country(name):
-    results = pd.DataFrame(columns=OPEN_EI_TOOLS_PARAMS)
+    results = pd.DataFrame()
     queryDbpedia = DBPEDIA_GET_CITY_COUNTRY_STRIPPED % {'label': name}
     for city, country, strippedLabel in run_query(DBPEDIA_ENDPOINT, queryDbpedia, ['city', 'country', 'strippedLabel']):
         query_OpenEi = OPEN_EI_QUERIES_FIND_TOOLS % {'country': name}
 
-        for a, b, c, d, e, f in run_query(OPENEI_ENPOINT, query_OpenEi, OPEN_EI_TOOLS_PARAMS):
-            results = results.append(
-                pd.Series({'organization': a, 'name': b, 'place_name': c, 'address': d, 'zip': e, 'sector': f}),
-                ignore_index=True)  # results.append(pd.Series(data=[a,b,c]), ignore_index=True)
+        for a, b, c in run_query(OPENEI_ENPOINT, query_OpenEi, OPEN_EI_CLEAN_ENERGY_COMPANIES_PARAMS):
+            results = results.append(pd.Series({'organization': a, 'name': b, 'place_name': c}),
+                                     ignore_index=True)  # results.append(pd.Series(data=[a,b,c]), ignore_index=True)
 
     print("Found {} tools in {}".format(len(results), name))
+    results = pd.DataFrame()
 
-    if len(results) < 1:
-        results = pd.DataFrame(columns=OPEN_EI_TOOLS_PARAMS)
-        query_OpenEi = OPEN_EI_QUERIES_FIND_TOOLS % {'country': strippedLabel}
+    query_OpenEi = OPEN_EI_QUERIES_FIND_TOOLS % {'country': strippedLabel}
 
-        for a, b, c, d, e, f in run_query(OPENEI_ENPOINT, query_OpenEi, OPEN_EI_TOOLS_PARAMS):
-            results = results.append(
-                pd.Series({'organization': a, 'name': b, 'place_name': c, 'address': d, 'zip': e, 'sector': f}),
-                ignore_index=True)  # results.append(pd.Series(data=[a,b,c]), ignore_index=True)
+    for a, b, c in run_query(OPENEI_ENPOINT, query_OpenEi, OPEN_EI_CLEAN_ENERGY_COMPANIES_PARAMS):
+        results = results.append(pd.Series({'organization': a, 'name': b, 'place_name': c}),
+                                 ignore_index=True)  # results.append(pd.Series(data=[a,b,c]), ignore_index=True)
     print("In total found {} tools in {}".format(len(results), strippedLabel))
-    # results['organization'] = results['organization'].apply(lambda x: re.sub('http://openei.org/resources', 'https://openei.org/wiki', x))#pandas_['organization'].apply(lambda x: re.sub('http://openei.org/resources', 'https://openei.org/wiki', x)) #get rid of lod page  lod/page
     results['organization'] = results['organization'].apply(
-        lambda x: '<a href="{0}">Link</a>'.format(re.sub('http://openei.org/resources', 'https://openei.org/wiki', x)))
-
+        lambda x: re.sub('http://openei.org/resources', 'https://openei.org/wiki', x))
     return results
 
 
 def run_clean_energy_company_by_country(name):
-    results = pd.DataFrame(columns=OPEN_EI_CLEAN_ENERGY_COMPANIES_PARAMS)
+    results = pd.DataFrame()
     queryDbpedia = DBPEDIA_GET_CITY_COUNTRY_STRIPPED % {'label': name}
 
     for city, country, strippedLabel in run_query(DBPEDIA_ENDPOINT, queryDbpedia, ['city', 'country', 'strippedLabel']):
         query_OpenEi = OPEN_EI_CLEAN_ENERGY_COMPANIES % {'country': name}
 
-        for a, b, d, e, f in run_query(OPENEI_ENPOINT, query_OpenEi, OPEN_EI_CLEAN_ENERGY_COMPANIES_PARAMS):
-            results = results.append(pd.Series({'organization': a, 'name': b, 'place_name': d, 'address': e, 'zip': f}),
+        for a, b, c in run_query(OPENEI_ENPOINT, query_OpenEi, OPEN_EI_CLEAN_ENERGY_COMPANIES_PARAMS):
+            results = results.append(pd.Series({'organization': a, 'name': b, 'place_name': c}),
                                      ignore_index=True)  # results.append(pd.Series(data=[a,b,c]), ignore_index=True)
 
     print("Found {} clean energy organizations in {}".format(len(results), name))
+    results = pd.DataFrame()
 
     query_OpenEi = OPEN_EI_CLEAN_ENERGY_COMPANIES % {'country': strippedLabel}
-    if len(results) < 1:
-        results = pd.DataFrame(columns=OPEN_EI_CLEAN_ENERGY_COMPANIES_PARAMS)
-        for a, b, d, e, f in run_query(OPENEI_ENPOINT, query_OpenEi, OPEN_EI_CLEAN_ENERGY_COMPANIES_PARAMS):
-            results = results.append(pd.Series({'organization': a, 'name': b, 'place_name': d, 'address': e, 'zip': f}),
-                                     ignore_index=True)  # results.append(pd.Series(data=[a,b,c]), ignore_index=True)
-        print("In total found {} clean energery organizations in {}".format(len(results), strippedLabel))
-    # results['organization'] = results['organization'].apply(lambda x: re.sub('http://openei.org/resources', 'https://openei.org/wiki', x))
-    results['organization'] = results['organization'].apply(
-        lambda x: '<a href="{0}">Link</a>'.format(re.sub('http://openei.org/resources', 'https://openei.org/wiki', x)))
+
+    for a, b, c in run_query(OPENEI_ENPOINT, query_OpenEi, OPEN_EI_CLEAN_ENERGY_COMPANIES_PARAMS):
+        results = results.append(pd.Series({'organization': a, 'name': b, 'place_name': c}),
+                                 ignore_index=True)  # results.append(pd.Series(data=[a,b,c]), ignore_index=True)
+    print("In total found {} clean energery organizations in {}".format(len(results), strippedLabel))
     return results
 
 
 def run_policy_by_country(name):
-    results = pd.DataFrame(columns=OPEN_EI_POLICY_PARAMS)
+    results = pd.DataFrame()
     queryDbpedia = DBPEDIA_GET_CITY_COUNTRY_STRIPPED % {'label': name}
 
     for city, country, strippedLabel in run_query(DBPEDIA_ENDPOINT, queryDbpedia, ['city', 'country', 'strippedLabel']):
         query_OpenEi = OPEN_EI_QUERY_POLICY_ORGANIZATIONS_PER_COUNTRY % {'country': name}
 
-        for a, b, c, d, e, f in run_query(OPENEI_ENPOINT, query_OpenEi, OPEN_EI_POLICY_PARAMS):
-            results = results.append(
-                pd.Series({'page': a, 'name': b, 'place_name': c, 'address': d, 'zip': e, 'sector': f}),
-                ignore_index=True)  # results.append(pd.Series(data=[a,b,c]), ignore_index=True)
+        for a, b, c, d in run_query(OPENEI_ENPOINT, query_OpenEi,
+                                    OPEN_EI_QUERY_POLICY_ORGANIZATIONS_PER_COUNTRY_PARAMS):
+            results = results.append(pd.Series({'page': a, 'name': b, 'address': c, 'place_name': d}),
+                                     ignore_index=True)  # results.append(pd.Series(data=[a,b,c]), ignore_index=True)
     print("Found {} policy organizations in {}".format(len(results), name))
-    print(len(results))
-    if len(results) < 1:
-        results = pd.DataFrame(columns=OPEN_EI_POLICY_PARAMS)
-        for city, country, strippedLabel in run_query(DBPEDIA_ENDPOINT, queryDbpedia,
-                                                      ['city', 'country', 'strippedLabel']):
-            query_OpenEi = OPEN_EI_QUERY_POLICY_ORGANIZATIONS_PER_COUNTRY % {'country': strippedLabel}
-
-            for a, b, c, d, e, f in run_query(OPENEI_ENPOINT, query_OpenEi, OPEN_EI_POLICY_PARAMS):
-                results = results.append(
-                    pd.Series({'page': a, 'name': b, 'place_name': c, 'address': d, 'zip': e, 'sector': f}),
-                    ignore_index=True)  # results.append(pd.Series(data=[a,b,c]), ignore_index=True)
-
-        print("In total found {} policy organization in {}".format(len(results), strippedLabel))
-    results['page'] = results['page'].apply(lambda x: '<a href="{0}">Link</a>'.format(x))
-    return results
-
-
-def run_organization_by_country_or_city(name):
-    # print(OPEN_EI_ORGANIZATIONS_PARAMS)
-    results = pd.DataFrame(columns=OPEN_EI_ORGANIZATIONS_PARAMS)
-    queryDbpedia = DBPEDIA_GET_CITY_COUNTRY_STRIPPED % {'label': name}
+    results = pd.DataFrame()
 
     for city, country, strippedLabel in run_query(DBPEDIA_ENDPOINT, queryDbpedia, ['city', 'country', 'strippedLabel']):
-        query_OpenEi = OPEN_EI_QUERY_ALL_ORGANIZATIONS_FROM_COUNTRY_OR_CITY % {'country': name}
+        query_OpenEi = OPEN_EI_QUERY_POLICY_ORGANIZATIONS_PER_COUNTRY % {'country': strippedLabel}
 
-        for a, b, c, d, e, f, g in run_query(OPENEI_ENPOINT, query_OpenEi, OPEN_EI_ORGANIZATIONS_PARAMS):
-            results = results.append(pd.Series(
-                {'organization': a, 'name': b, 'place': c, 'place_name': d, 'address': e, 'zip': f, 'sector': g}),
+        for a, b, c, d in run_query(OPENEI_ENPOINT, query_OpenEi,
+                                    OPEN_EI_QUERY_POLICY_ORGANIZATIONS_PER_COUNTRY_PARAMS):
+            results = results.append(pd.Series({'page': a, 'name': b, 'address': c, 'place_name': d}),
                                      ignore_index=True)  # results.append(pd.Series(data=[a,b,c]), ignore_index=True)
 
-    print("Found {} organizations in {}".format(len(results), name))
-
-    if len(results) < 2:
-        results = pd.DataFrame(columns=OPEN_EI_ORGANIZATIONS_PARAMS)
-
-        query_OpenEi = OPEN_EI_QUERY_ALL_ORGANIZATIONS_FROM_COUNTRY_OR_CITY % {'country': strippedLabel}
-
-        for a, b, c, d, e, f, g in run_query(OPENEI_ENPOINT, query_OpenEi, OPEN_EI_ORGANIZATIONS_PARAMS):
-            results = results.append(pd.Series(
-                {'organization': a, 'name': b, 'place': c, 'place_name': d, 'address': e, 'zip': f, 'sector': g}),
-                                     ignore_index=True)  # results.append(pd.Series(data=[a,b,c]), ignore_index=True)
-        print("In total found {} organizations in {}".format(len(results), strippedLabel))
-    results['organization'] = results['organization'].apply(
-        lambda x: '<a href="{0}">Link</a>'.format(re.sub('http://openei.org/resources', 'https://openei.org/wiki', x)))
-    results['place'] = results['place'].apply(
-        lambda x: '<a href="{0}">{0}</a>'.format(re.sub('http://openei.org/resources', 'https://openei.org/wiki', x)))
-
+    print("In total found {} policy organization in {}".format(len(results), strippedLabel))
     return results
 
-
-def run_financial_by_country_or_city(name):
-    results = pd.DataFrame(columns=OPEN_EI_FINANCIAL_PARAMS)
-    queryDbpedia = DBPEDIA_GET_CITY_COUNTRY_STRIPPED % {'label': name}
-
-    for city, country, strippedLabel in run_query(DBPEDIA_ENDPOINT, queryDbpedia, ['city', 'country', 'strippedLabel']):
-        query_OpenEi = OPEN_EI_QUERY_FINANCIAL_INSTITUTIONS % {'country': name}
-
-        for a, b, c, c1, d in run_query(OPENEI_ENPOINT, query_OpenEi, OPEN_EI_FINANCIAL_PARAMS):
-            results = results.append(pd.Series({'page': a, 'name': b, 'address': c, 'place': c1, 'place_name': d}),
-                                     ignore_index=True)  # results.append(pd.Series(data=[a,b,c]), ignore_index=True)
-
-    results['place'] = results['place'].apply(
-        lambda x: '<a href="{0}">{0}</a>'.format(re.sub('http://openei.org/resources', 'https://openei.org/wiki', x)))
-    results['page'] = results['page'].apply(lambda x: '<a href="{0}">Link</a>'.format(x))
-    print("Found {} FINANCIAL_INSTITUTIONS in {}".format(len(results), name))
-    return results
-
-
-def run_institutions_by_country_or_city(name):
-    results = pd.DataFrame(columns=OPEN_EI_FINANCIAL_PARAMS)
-    queryDbpedia = DBPEDIA_GET_CITY_COUNTRY_STRIPPED % {'label': name}
-
-    for city, country, strippedLabel in run_query(DBPEDIA_ENDPOINT, queryDbpedia, ['city', 'country', 'strippedLabel']):
-        query_OpenEi = OPEN_EI_QUERY_RETRIEVE_ALL_INSTITUTES_FROM_COUNTRY_BY_PLACE_NAME % {'country': name}
-
-        for a, b, c, c1, d in run_query(OPENEI_ENPOINT, query_OpenEi, OPEN_EI_FINANCIAL_PARAMS):
-            results = results.append(pd.Series({'page': a, 'name': b, 'address': c, 'place': c1, 'place_name': d}),
-                                     ignore_index=True)  # results.append(pd.Series(data=[a,b,c]), ignore_index=True)
-
-    print("Found {} institutions in {}".format(len(results), name))
-    if len(results) < 1:
-        results = pd.DataFrame(columns=OPEN_EI_FINANCIAL_PARAMS)
-
-        query_OpenEi = OPEN_EI_QUERY_RETRIEVE_ALL_INSTITUTES_FROM_COUNTRY_BY_PLACE_NAME % {'country': strippedLabel}
-
-        for a, b, c, c1, d in run_query(OPENEI_ENPOINT, query_OpenEi, OPEN_EI_FINANCIAL_PARAMS):
-            results = results.append(pd.Series({'page': a, 'name': b, 'address': c, 'place': c1, 'place_name': d}),
-                                     ignore_index=True)  # results.append(pd.Series(data=[a,b,c]), ignore_index=True)
-
-        print("In total found {} institutions in {}".format(len(results), strippedLabel))
-
-    results['place'] = results['place'].apply(
-        lambda x: '<a href="{0}">{0}</a>'.format(re.sub('http://openei.org/resources', 'https://openei.org/wiki', x)))
-    results['page'] = results['page'].apply(lambda x: '<a href="{0}">Link</a>'.format(x))
-    return results
 
 def build_airquality_graphs(data):
     data = data.sort_values(['Station','Time'])

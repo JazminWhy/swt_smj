@@ -2,12 +2,13 @@ from flask import Flask, render_template, redirect, url_for, request
 from tables import Results
 import sparql_queries
 from IPython.display import HTML
+import ssl
 from pretty_html_table import build_table
 
 app = Flask(__name__)
-app.secret_key = "super secret key"
+#app.secret_key = "super secret key"
 
-
+#context = ssl.create_default_context()
 @app.route("/")
 def index():
     return render_template('index.html')
@@ -28,6 +29,8 @@ def query(input):
                                    HTML(build_table(openei_organization_results, 'blue_dark')),
                                    HTML(build_table(openei_tools_by_country_results, 'blue_dark')),
                                    HTML(build_table(openei_policy_by_country, 'blue_dark'))],
+                           # TRY HTML(build_table(openei_policy_by_country, 'blue_dark').to_html(escape=False))],
+                           # HTML(pandas_.to_html(escape=False))
                            titles=["Airquality results in " + input,
                                    # facility_results.columns.values,
                                    # openei_organization_results.columns.values,
